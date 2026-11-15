@@ -36,18 +36,37 @@ export async function POST(req) {
 
     let user = await User.findOne({ googleId });
     if (user) {
-      user.name = name;
-      user.picture = picture;
-      user.role = role;
+      user.name = name || user.name;
+      user.picture = picture || user.picture;
+      if (role === 'admin') user.role = 'admin';
+      user.emailVerified = true;
       await user.save();
     } else {
-      user = await User.create({
-        googleId,
-        name,
-        email,
-        picture,
-        role,
-      });
+      // Check if user with this email already exists (e.g. registered via email/password)
+      user = await User.findOne({ email: email.toLowerCase() });
+      if (user) {
+        user.googleId = googleId;
+        if (!user.picture) user.picture = picture;
+        if (role === 'admin') user.role = 'admin';
+        user.emailVerified = true;
+        await user.save();
+      } else {
+        const nameParts = (name || '').trim().split(' ');
+        const firstName = nameParts[0] || 'User';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        user = await User.create({
+          googleId,
+          name,
+          firstName,
+          lastName,
+          email: email.toLowerCase(),
+          picture,
+          role,
+          emailVerified: true,
+          authenticationProvider: 'google',
+        });
+      }
     }
 
     const token = signToken({ id: user._id });

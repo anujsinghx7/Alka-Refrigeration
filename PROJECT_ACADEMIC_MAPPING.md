@@ -65,22 +65,31 @@
 ---
 
 ### Unit 4: Forms, Validation & Controlled Components
-* **Learning Outcome:** Controlled components, two-way state binding, enterprise form validation using Zod and React Hook Form.
+* **Learning Outcome:** Controlled components, two-way state binding, enterprise form validation using Zod, React Hook Form, and multi-step verification state machines.
 * **Implementation in Alka Refrigeration 2.0:**
-  * **React Hook Form + Zod:** Form handling in `components/forms/BookingForm.js` using `zodResolver(bookingSchema)`.
+  * **Multi-Step Authentication Forms:** Step-by-step registration flow (`components/auth/SignupForm.jsx`) managing 4 discrete steps (Personal Information, Email OTP, Optional Mobile Verification, Account Activation).
+  * **Specialized Controlled Components (`components/auth/OtpInput.jsx`):**
+    * 6-digit numeric input with auto-focus traversal, backspace retreat, full clipboard paste synchronization, and arrow key navigation.
+  * **React Hook Form + Zod:** Form handling in `components/forms/BookingForm.js` and `schemas/authSchemas.js` using `zodResolver`.
   * **Validation Rules:**
-    * Name: Minimum 2, maximum 60 characters.
+    * Credentials: First & last name requirements, strict email format, password complexity (min 6 chars, mixed characters), password confirmation match.
     * Mobile: Strict regex `/^[6-9]\d{9}$/` ensuring valid 10-digit Indian numbers.
     * Service Location: Mandatory 3–200 characters.
     * Preferred Date: Must be a valid date from tomorrow onwards.
     * Service Category: Strict enum matching valid refrigeration services.
   * **Relevant Files:**
+    * `schemas/authSchemas.js`
     * `schemas/bookingSchema.js`
     * `schemas/couponSchema.js`
     * `schemas/profileSchema.js`
+    * `components/auth/SignupForm.jsx`
+    * `components/auth/LoginForm.jsx`
+    * `components/auth/ForgotPasswordForm.jsx`
+    * `components/auth/ResetPasswordForm.jsx`
+    * `components/auth/OtpInput.jsx`
     * `components/forms/BookingForm.js`
     * `components/ui/Input.js`
-  * **Viva / Demonstration Point:** Try entering an invalid phone number (e.g., `12345` or letters) on `/booking` and submit. Show the real-time client validation error rendered by Zod.
+  * **Viva / Demonstration Point:** Try entering an invalid phone number or unmatched password on `/signup` or `/booking`. Demonstrate how the multi-digit `OtpInput` handles clipboard paste of a 6-digit number directly across individual input fields.
 
 ---
 
@@ -194,18 +203,46 @@
 ---
 
 ### Unit 5: Authentication, Authorization & Security
-* **Learning Outcome:** Secure session management, JWT handling, role-based access control, environment security.
+* **Learning Outcome:** Secure session management, multi-factor OTP verification, bcrypt password hashing, JWT handling, role-based access control, environment security.
 * **Implementation in Alka Refrigeration 2.0:**
-  * **Google OAuth 2.0:** Server-side token verification using `google-auth-library`.
-  * **JWT Session:** 7-day signed JWT tokens containing user ID, stored securely in HTTP cookies and localStorage.
+  * **Dual Authentication Modes:**
+    1. **Email & Password Authentication:**
+       * Multi-step registration flow with email verification gate (user account is NOT active until OTP confirmed).
+       * Optional mobile number verification via SMS gateway (Twilio / Fast2SMS) with seamless "Skip for Now" fallback.
+       * 6-digit numeric OTP generation via CSPRNG (`crypto.randomInt`).
+       * OTPs hashed with `bcryptjs` (salt 10) in MongoDB (`VerificationOtp` model) with automatic TTL index (900s).
+       * Brute-force defense: Maximum 5 verification attempts per OTP.
+       * Cooldown & rate limiting: 60-second resend cooldown timer.
+       * Password reset lifecycle (`/forgot-password` and `/reset-password`).
+    2. **Google OAuth 2.0:** Server-side token verification using `google-auth-library` and intelligent account linking.
+  * **JWT Session Management:** Signed JWT tokens with configurable lifespan (7 days default, 30 days with "Remember Me"), synced across HTTP cookies (`alka_token`) and localStorage.
   * **Role-Based Access Control (RBAC):** Admin route guard checking `role === 'admin'` and verifying `ADMIN_EMAIL=refrigerationalka@gmail.com`.
   * **Ownership Protection:** Customers can only view, edit, or cancel their own bookings.
   * **Relevant Files:**
-    * `lib/auth.js`
     * `models/User.js`
+    * `models/VerificationOtp.js`
+    * `lib/auth.js`
+    * `lib/otpService.js`
+    * `lib/emailService.js`
+    * `lib/smsService.js`
+    * `app/api/auth/register/step1/route.js`
+    * `app/api/auth/register/verify-email/route.js`
+    * `app/api/auth/register/send-mobile-otp/route.js`
+    * `app/api/auth/register/verify-mobile-otp/route.js`
+    * `app/api/auth/register/resend-otp/route.js`
+    * `app/api/auth/login/route.js`
+    * `app/api/auth/forgot-password/route.js`
+    * `app/api/auth/reset-password/route.js`
     * `app/api/auth/google-login/route.js`
-    * `app/admin/page.js`
-  * **Viva / Demonstration Point:** Show how logging in with a regular Gmail account grants access to customer profile but blocks `/admin` with an "Access Denied" view, whereas the admin account unlocks full control.
+    * `app/login/page.js`
+    * `app/signup/page.js`
+    * `app/forgot-password/page.js`
+    * `app/reset-password/page.js`
+  * **Viva / Demonstration Point:**
+    1. Register a new user on `/signup`. Show console output of the generated 6-digit OTP (when SMTP credentials are unset or live email when set).
+    2. Try logging in without verifying email: observe the 403 Forbidden protection.
+    3. Demonstrate the optional mobile verification step by clicking "Skip for Now" and confirming account creation completes successfully.
+    4. Test the "Forgot Password" flow with an email OTP and update to a new password.
 
 ---
 

@@ -30,6 +30,43 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const setSession = useCallback((tokenData, userData, rememberMe = false) => {
+    setToken(tokenData);
+    setUser(userData);
+    try {
+      localStorage.setItem('alka_token', tokenData);
+      localStorage.setItem('alka_user', JSON.stringify(userData));
+      const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60;
+      document.cookie = `alka_token=${tokenData}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    } catch (e) {
+      console.error('Error saving auth to localStorage:', e);
+    }
+  }, []);
+
+  const loginWithCredentials = useCallback(async ({ email, password, rememberMe = false }) => {
+    try {
+      setIsLoading(true);
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, rememberMe }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Login failed. Please check your credentials.');
+      }
+
+      setSession(data.token, data.user, rememberMe);
+      return { success: true, user: data.user };
+    } catch (error) {
+      console.error('Credentials login error:', error);
+      return { success: false, message: error.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setSession]);
+
   const loginWithGoogle = useCallback(async (credential) => {
     try {
       setIsLoading(true);
@@ -44,13 +81,7 @@ export function AuthProvider({ children }) {
         throw new Error(data.message || 'Google authentication failed.');
       }
 
-      setToken(data.token);
-      setUser(data.user);
-
-      localStorage.setItem('alka_token', data.token);
-      localStorage.setItem('alka_user', JSON.stringify(data.user));
-      document.cookie = `alka_token=${data.token}; path=/; max-age=604800; SameSite=Lax`;
-
+      setSession(data.token, data.user, false);
       return { success: true, user: data.user };
     } catch (error) {
       console.error('Login error:', error);
@@ -58,7 +89,7 @@ export function AuthProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setSession]);
 
   const logout = useCallback(() => {
     setUser(null);
@@ -115,12 +146,14 @@ export function AuthProvider({ children }) {
       token,
       isLoading,
       isAdmin,
+      loginWithCredentials,
       loginWithGoogle,
+      setSession,
       logout,
       updateUserProfile,
       setUser,
     }),
-    [user, token, isLoading, isAdmin, loginWithGoogle, logout, updateUserProfile]
+    [user, token, isLoading, isAdmin, loginWithCredentials, loginWithGoogle, setSession, logout, updateUserProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
