@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Alka Refrigeration — Your profile, service requests, payments, and coupons." />
+  <title>My Profile — Alka Refrigeration</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/images/alka logo.png" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/profile.css" />
+</head>
+<body>
+
+  <!-- =============================================
+       NAVBAR
+       ============================================= -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-logo">
+        <img src="assets/images/alka logo.png" alt="Alka Refrigeration" class="logo-img" />
+      </a>
+
+      <!-- Profile Dropdown -->
+      <div class="profile-dropdown" id="profile-dropdown" style="display: none;">
+        <button class="profile-trigger" id="profile-trigger" onclick="toggleProfileMenu()">
+          <!-- First name label -->
+          <span class="nav-user-label" id="nav-user-label"></span>
+          <img src="" alt="User" class="profile-avatar-sm" id="nav-avatar" />
+        </button>
+        
+        <div class="profile-menu" id="profile-menu">
+          <div class="profile-menu-header">
+            <img src="" alt="User" class="pm-avatar" id="pm-avatar" />
+            <div class="pm-info">
+              <div class="pm-name" id="pm-name"></div>
+              <div class="pm-email" id="pm-email"></div>
+            </div>
+          </div>
+          <div class="profile-menu-divider"></div>
+          <a href="profile.html" class="profile-menu-item">
+            👤 My Profile
+          </a>
+          <a href="profile.html?tab=complaints" class="profile-menu-item">
+            📋 My Bookings
+          </a>
+          <a href="admin.html" class="profile-menu-item" id="pm-admin" style="display: none;">
+            ⚙️ Admin Panel
+          </a>
+          <div class="profile-menu-divider"></div>
+          <button class="profile-menu-item logout" onclick="profileLogout()">
+            🚪 Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- =============================================
+       PROFILE CONTENT
+       ============================================= -->
+  <main class="profile-main">
+    <div class="container">
+
+      <!-- Profile Header -->
+      <div class="profile-header" id="profile-header">
+        <div class="profile-avatar-wrapper">
+          <img src="" alt="Profile" class="profile-avatar" id="profile-avatar" />
+          <div class="profile-avatar-badge">✓</div>
+        </div>
+        <div class="profile-info">
+          <h1 id="profile-name">Loading...</h1>
+          <p id="profile-email">—</p>
+        </div>
+      </div>
+
+      <!-- Profile Tabs -->
+      <div class="profile-tabs">
+        <button class="profile-tab active" data-tab="info" onclick="switchTab('info')">
+          👤 User Info
+        </button>
+        <button class="profile-tab" data-tab="complaints" onclick="switchTab('complaints')">
+          📋 My Complaints
+        </button>
+        <button class="profile-tab" data-tab="coupons" onclick="switchTab('coupons')">
+          🎟 My Coupons
+        </button>
+      </div>
+
+      <!-- =============================================
+           TAB: USER INFO
+           ============================================= -->
+      <div class="tab-content active" id="tab-info">
+        <div class="info-card">
+          <h3>Personal Information</h3>
+          <form id="profile-form" onsubmit="updateProfile(event)">
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Full Name</label>
+                <input type="text" id="info-name" class="form-control" readonly />
+              </div>
+              <div class="info-item">
+                <label>Email Address</label>
+                <input type="email" id="info-email" class="form-control" readonly />
+              </div>
+              <div class="info-item">
+                <label>Mobile Number</label>
+                <input type="tel" id="info-mobile" class="form-control" placeholder="Enter your mobile number" pattern="[6-9][0-9]{9}" maxlength="10" />
+              </div>
+              <div class="info-item">
+                <label>Location</label>
+                <input type="text" id="info-location" class="form-control" placeholder="Enter your location" />
+              </div>
+            </div>
+            <button type="submit" class="btn-save-profile">Save Changes</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- =============================================
+           TAB: MY COMPLAINTS
+           ============================================= -->
+      <div class="tab-content" id="tab-complaints">
+        <div id="complaints-container">
+          <div class="profile-loading">
+            <span class="spinner"></span>
+            <p>Loading your complaints...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================
+           TAB: MY COUPONS
+           ============================================= -->
+      <div class="tab-content" id="tab-coupons">
+        <div id="coupons-container">
+          <div class="profile-loading">
+            <span class="spinner"></span>
+            <p>Loading your coupons...</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- =============================================
+       PAYMENT MODAL (Razorpay + Coupon)
+       ============================================= -->
+  <div class="modal-overlay" id="payment-modal" style="display:none;">
+    <div class="modal-card">
+      <h3>💳 Pay Online</h3>
+      <div class="payment-summary" id="payment-summary">
+        <div class="payment-row">
+          <span>Service Amount</span>
+          <span id="payment-original-amount">₹0</span>
+        </div>
+        <div class="payment-row discount-row" id="payment-discount-row" style="display:none;">
+          <span>Coupon Discount</span>
+          <span id="payment-discount" class="text-success">-₹0</span>
+        </div>
+        <div class="payment-row payment-total">
+          <span>Total</span>
+          <span id="payment-final-amount">₹0</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="payment-coupon">Apply Coupon (optional)</label>
+        <select id="payment-coupon" class="form-control" onchange="recalculatePayment()">
+          <option value="">No coupon</option>
+        </select>
+      </div>
+
+      <input type="hidden" id="payment-complaint-id" />
+      <input type="hidden" id="payment-amount" />
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closePaymentModal()">Cancel</button>
+        <button class="btn-pay" onclick="processPayment()">
+          ✅ Confirm Payment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       EDIT BOOKING MODAL
+       ============================================= -->
+  <div class="modal-overlay" id="edit-modal" style="display:none;">
+    <div class="modal-card">
+      <h3>✏️ Edit Booking</h3>
+      <div class="form-group">
+        <label for="edit-mobile">Mobile Number</label>
+        <input type="tel" id="edit-mobile" class="form-control" placeholder="10-digit mobile" pattern="[6-9][0-9]{9}" maxlength="10" />
+      </div>
+      <div class="form-group">
+        <label for="edit-location">Location</label>
+        <input type="text" id="edit-location" class="form-control" placeholder="Service location" />
+      </div>
+      <div class="form-group">
+        <label for="edit-date">Preferred Date</label>
+        <input type="date" id="edit-date" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="edit-time">Preferred Time</label>
+        <select id="edit-time" class="form-control">
+          <option value="Anytime">Anytime</option>
+          <option value="Morning (8AM - 12PM)">Morning (8AM - 12PM)</option>
+          <option value="Afternoon (12PM - 4PM)">Afternoon (12PM - 4PM)</option>
+          <option value="Evening (4PM - 8PM)">Evening (4PM - 8PM)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="edit-instructions">Special Instructions</label>
+        <textarea id="edit-instructions" class="form-control" rows="3" placeholder="Describe your issue..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-pay" id="btn-save-edit" onclick="submitEditBooking()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       CANCEL BOOKING CONFIRM MODAL
+       ============================================= -->
+  <div class="modal-overlay" id="cancel-confirm-modal" style="display:none;">
+    <div class="modal-card">
+      <h3>🗑 Cancel Booking?</h3>
+      <p style="color:#636b83;margin:12px 0 20px;">Are you sure you want to cancel this booking? This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeCancelConfirm()">No, Keep It</button>
+        <button class="btn-pay" id="btn-confirm-cancel" style="background:#e53935;" onclick="confirmCancelBooking()">Yes, Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item" data-tab="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </a>
+    <a href="profile.html?tab=complaints" class="bottom-nav-item" data-tab="bookings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Bookings
+    </a>
+    <a href="profile.html" class="bottom-nav-item" data-tab="profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </a>
+  </nav>
+
+  <!-- Razorpay Checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <!-- JavaScript -->
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/profile.js"></script>
+
+</body>
+</html>
