@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Complaint from '@/models/Complaint';
 import Coupon from '@/models/Coupon';
 import { getAuthUser } from '@/lib/auth';
+import { emitBookingStatusUpdate } from '@/lib/socketServer';
 
 export async function POST(req, { params }) {
   try {
@@ -69,6 +70,13 @@ export async function POST(req, { params }) {
     complaint.amount = finalAmount;
     if (appliedCoupon) complaint.couponApplied = appliedCoupon;
     await complaint.save();
+
+    // Emit real-time payment update
+    try {
+      emitBookingStatusUpdate(complaint);
+    } catch (socketErr) {
+      console.error('Socket.IO emit error:', socketErr);
+    }
 
     return NextResponse.json({
       message: 'Payment completed successfully!',

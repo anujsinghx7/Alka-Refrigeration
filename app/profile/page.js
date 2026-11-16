@@ -12,6 +12,7 @@ import Badge from '@/components/ui/Badge';
 import PaymentModal from '@/components/dashboard/PaymentModal';
 import EditBookingModal from '@/components/dashboard/EditBookingModal';
 import CancelConfirmModal from '@/components/dashboard/CancelConfirmModal';
+import { RealtimeIndicator } from '@/components/realtime/RealtimeStatusBadge';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import {
   User as UserIcon,
@@ -260,6 +261,18 @@ function ProfileContent() {
       {/* TAB 2: MY BOOKINGS */}
       {activeTab === 'bookings' && (
         <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-sm">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 font-heading">
+                Live Service Booking Tracker
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Statuses synchronize in real-time when a technician is assigned, calls, or arrives at your doorstep.
+              </p>
+            </div>
+            <RealtimeIndicator />
+          </div>
+
           {bookingsLoading ? (
             <div className="p-12 text-center text-slate-400">Loading your bookings...</div>
           ) : bookings.length === 0 ? (
@@ -282,14 +295,25 @@ function ProfileContent() {
               {bookings.map((b) => (
                 <div
                   key={b._id}
-                  className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex flex-col justify-between space-y-4"
+                  className={`bg-white rounded-3xl p-6 border shadow-sm flex flex-col justify-between space-y-4 transition-all duration-500 ${
+                    b._justUpdated
+                      ? 'border-emerald-500 ring-2 ring-emerald-400/20 bg-emerald-50/20 animate-pulse'
+                      : 'border-slate-200/80'
+                  }`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <span className="text-xs font-bold text-brand-600 uppercase tracking-wider">
-                          Request #{b._id.slice(-6)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-brand-600 uppercase tracking-wider">
+                            Request #{b._id.slice(-6)}
+                          </span>
+                          {b._justUpdated && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 animate-bounce">
+                              Just Updated
+                            </span>
+                          )}
+                        </div>
                         <h3 className="text-lg font-bold text-slate-900 font-heading">
                           {b.serviceType}
                         </h3>
@@ -325,6 +349,18 @@ function ProfileContent() {
                         </div>
                       )}
                     </div>
+
+                    {b.updatedAt && (
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5 px-1">
+                        <span className="flex items-center gap-1 text-slate-400">
+                          <Clock className="w-3 h-3" />
+                          <span>Last Activity:</span>
+                        </span>
+                        <span className="font-semibold text-slate-600">
+                          {new Date(b.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, {formatDate(b.updatedAt)}
+                        </span>
+                      </div>
+                    )}
 
                     {b.instructions && (
                       <p className="text-xs text-slate-500 italic bg-white p-2 border border-slate-100 rounded-xl">

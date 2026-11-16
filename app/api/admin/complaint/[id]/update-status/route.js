@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Complaint from '@/models/Complaint';
 import { getAuthUser, isUserAdmin } from '@/lib/auth';
+import { emitBookingStatusUpdate } from '@/lib/socketServer';
 
 export async function PATCH(req, { params }) {
   try {
@@ -40,6 +41,13 @@ export async function PATCH(req, { params }) {
     const updated = await Complaint.findById(id)
       .populate('userId', 'name email mobile picture')
       .populate('couponApplied', 'code discountType discountValue discount');
+
+    // Emit real-time WebSocket update after successful DB persistence
+    try {
+      emitBookingStatusUpdate(updated || complaint);
+    } catch (socketErr) {
+      console.error('Socket.IO emit error:', socketErr);
+    }
 
     return NextResponse.json({
       message: 'Complaint status updated successfully',

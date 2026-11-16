@@ -1,6 +1,8 @@
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import QueryProvider from '@/components/providers/QueryProvider';
+import { SocketProvider } from '@/context/SocketContext';
+import { RealtimeToast } from '@/components/realtime/RealtimeStatusBadge';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import WhatsAppButton from '@/components/layout/WhatsAppButton';
@@ -62,11 +64,14 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen flex flex-col antialiased bg-slate-50 text-slate-800">
         <AuthProvider>
           <QueryProvider>
-            <Navbar />
-            <div className="flex-1 pt-20 pb-16 md:pb-0">{children}</div>
-            <Footer />
-            <WhatsAppButton />
-            <BottomNav />
+            <SocketProvider>
+              <Navbar />
+              <div className="flex-1 pt-20 pb-16 md:pb-0">{children}</div>
+              <Footer />
+              <WhatsAppButton />
+              <BottomNav />
+              <RealtimeToast />
+            </SocketProvider>
           </QueryProvider>
         </AuthProvider>
       </body>

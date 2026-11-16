@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Complaint from '@/models/Complaint';
 import { getAuthUser, isUserAdmin } from '@/lib/auth';
+import { emitBookingStatusUpdate } from '@/lib/socketServer';
 
 export async function PATCH(req, { params }) {
   try {
@@ -25,6 +26,13 @@ export async function PATCH(req, { params }) {
 
     complaint.amount = Number(amount);
     await complaint.save();
+
+    // Emit real-time status & amount update
+    try {
+      emitBookingStatusUpdate(complaint);
+    } catch (socketErr) {
+      console.error('Socket.IO emit error:', socketErr);
+    }
 
     return NextResponse.json({
       message: 'Service amount updated successfully',
